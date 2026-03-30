@@ -1,7 +1,5 @@
 node_modules
 dist
-# Built site is deployed to docs/ by CI; keep local builds out of commits
-docs
 .DS_Store
 *.log
 .env
