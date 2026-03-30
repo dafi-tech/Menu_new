@@ -1,35 +1,39 @@
-# Publishes ./dist to the gh-pages branch (no deploy-pages / no github-pages environment).
+# Builds the site and commits the output to docs/ on main.
 #
-# REQUIRED — one-time in the repo:
-# 1) Settings → Actions → General → Workflow permissions → "Read and write permissions" → Save.
-# 2) Settings → Pages → Build and deployment → Source: "Deploy from a branch"
-#    → Branch: gh-pages, folder: / (root) → Save.
-#    (Do NOT use "GitHub Actions" as the source for this workflow.)
+# REQUIRED in the repo (one-time):
+# Settings → Actions → General → Workflow permissions → "Read and write permissions" → Save.
+# Settings → Pages → Build and deployment → Source: "Deploy from a branch"
+#   → Branch: main, folder: /docs → Save.
 #
-# After the first successful run, the site is at:
-# https://<owner>.github.io/<repo>/
+# Site URL: https://<owner>.github.io/<repo>/
 
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: gh-pages-deploy
+  group: deploy-docs
   cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
@@ -40,9 +44,11 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Push dist to gh-pages branch
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Publish to docs/ on main
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          force_orphan: true
+          branch: main
+          folder: dist
+          target-folder: docs
+          clean: true
+          commit-message: 'chore: deploy site to docs [skip ci]'
